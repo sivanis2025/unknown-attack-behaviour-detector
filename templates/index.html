@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unknown Attack Behaviour Detector | Cybersecurity ML Dashboard</title>
+  <meta name="description" content="A machine-learning powered cybersecurity dashboard that detects anomalous network traffic using unsupervised Isolation Forest algorithms." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER / HERO
+═══════════════════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-group">
+      <div class="logo-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 2L33 10V26L18 34L3 26V10L18 2Z" stroke="#00d4ff" stroke-width="1.5" fill="none"/>
+          <path d="M18 8L27 13V23L18 28L9 23V13L18 8Z" fill="#00d4ff22" stroke="#00d4ff" stroke-width="1"/>
+          <circle cx="18" cy="18" r="4" fill="#00d4ff"/>
+          <line x1="18" y1="8" x2="18" y2="14" stroke="#00d4ff" stroke-width="1"/>
+          <line x1="18" y1="22" x2="18" y2="28" stroke="#00d4ff" stroke-width="1"/>
+          <line x1="9" y1="13" x2="14" y2="16" stroke="#00d4ff" stroke-width="1"/>
+          <line x1="22" y1="20" x2="27" y2="23" stroke="#00d4ff" stroke-width="1"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="site-title">Unknown Attack Behaviour Detector</h1>
+        <p class="site-subtitle">Unsupervised Anomaly Detection via Isolation Forest</p>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-ml">ML Powered</span>
+      <span class="badge badge-live" id="modelStatusBadge">Model Loading…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DISCLAIMER BANNER
+═══════════════════════════════════════════════════════════ -->
+<div class="disclaimer-banner" role="alert">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span><strong>Research / Educational Tool:</strong> Flagged records indicate <em>statistical anomalies</em>, not confirmed attacks. Results require expert review.</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- ── CONTROL PANEL ── -->
+  <section class="panel control-panel" aria-label="Analysis controls">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Analysis Controls
+      </h2>
+    </div>
+    <div class="control-grid">
+
+      <!-- Demo Button -->
+      <div class="control-card" id="demoCard">
+        <div class="control-card-icon demo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </div>
+        <div class="control-card-info">
+          <h3>Run Demo Analysis</h3>
+          <p>Analyse the built-in <strong>synthetic demonstration dataset</strong> (500 records, 20% anomaly-like)</p>
+          <span class="control-label">⚠ Synthetic Data — Not Real Traffic</span>
+        </div>
+        <button class="btn btn-primary" id="runDemoBtn" aria-label="Run demo analysis">
+          <span class="btn-text">Run Demo</span>
+          <span class="btn-spinner" hidden></span>
+        </button>
+      </div>
+
+      <!-- Upload & Analyse -->
+      <div class="control-card" id="uploadCard">
+        <div class="control-card-icon upload-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        </div>
+        <div class="control-card-info">
+          <h3>Upload & Analyse CSV</h3>
+          <p>Upload your own network-flow CSV. CIC-IDS2017 column names supported. Max 10 MB.</p>
+          <a href="/api/sample-csv" class="link-small" id="sampleCsvLink">↓ Download Sample CSV Template</a>
+        </div>
+        <div class="upload-group">
+          <label for="csvFile" class="file-label">
+            <input type="file" id="csvFile" accept=".csv" aria-label="Select CSV file" />
+            <span class="file-label-text" id="fileNameDisplay">No file chosen</span>
+          </label>
+          <button class="btn btn-secondary" id="uploadAnalyseBtn" disabled aria-label="Upload and analyse CSV">
+            <span class="btn-text">Analyse</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Retrain -->
+      <div class="control-card" id="retrainCard">
+        <div class="control-card-icon retrain-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </div>
+        <div class="control-card-info">
+          <h3>Retrain Model</h3>
+          <p>Upload a CSV to retrain the Isolation Forest on your own data.</p>
+        </div>
+        <div class="upload-group">
+          <label for="trainCsvFile" class="file-label">
+            <input type="file" id="trainCsvFile" accept=".csv" aria-label="Select CSV for training" />
+            <span class="file-label-text" id="trainFileNameDisplay">No file chosen</span>
+          </label>
+          <button class="btn btn-warning" id="retrainBtn" disabled aria-label="Retrain model">
+            <span class="btn-text">Retrain</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── ERROR / SUCCESS TOAST ── -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- ── LOADING OVERLAY ── -->
+  <div id="globalLoader" class="global-loader" hidden aria-busy="true">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <p id="loaderText" class="loader-text">Processing…</p>
+    </div>
+  </div>
+
+  <!-- ── RESULTS (hidden until first analysis) ── -->
+  <div id="resultsSection" hidden>
+
+    <!-- Data source label -->
+    <div class="source-label-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Source: <strong id="dataSourceLabel">—</strong></span>
+      <button class="btn btn-sm btn-outline" id="downloadReportBtn" aria-label="Download predictions CSV">
+        ↓ Download Report CSV
+      </button>
+    </div>
+
+    <!-- STAT CARDS -->
+    <section class="stats-grid" aria-label="Summary statistics">
+      <div class="stat-card">
+        <div class="stat-icon total-icon" aria-hidden="true">📊</div>
+        <div class="stat-body">
+          <span class="stat-label">Total Records</span>
+          <span class="stat-value" id="statTotal">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon normal-icon" aria-hidden="true">✅</div>
+        <div class="stat-body">
+          <span class="stat-label">Normal Traffic</span>
+          <span class="stat-value normal-value" id="statNormal">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon anomaly-icon" aria-hidden="true">⚠️</div>
+        <div class="stat-body">
+          <span class="stat-label">Anomalies Detected</span>
+          <span class="stat-value anomaly-value" id="statAnomalies">—</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon pct-icon" aria-hidden="true">📈</div>
+        <div class="stat-body">
+          <span class="stat-label">Anomaly Rate</span>
+          <span class="stat-value pct-value" id="statPct">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHARTS ROW -->
+    <section class="charts-row" aria-label="Visualizations">
+
+      <div class="panel chart-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Traffic Distribution</h2>
+          <span class="panel-hint">Normal vs Anomalous</span>
+        </div>
+        <div class="chart-wrapper doughnut-wrapper">
+          <canvas id="distributionChart" aria-label="Traffic distribution doughnut chart"></canvas>
+        </div>
+        <div class="chart-legend" id="distLegend"></div>
+      </div>
+
+      <div class="panel chart-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Anomaly Score Distribution</h2>
+          <span class="panel-hint">Lower score = stronger anomaly signal</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="scoreHistChart" aria-label="Anomaly score histogram bar chart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel chart-panel full-width">
+        <div class="panel-header">
+          <h2 class="panel-title">Anomaly Scores — First 200 Records</h2>
+          <span class="panel-hint">Red line = anomaly classification threshold</span>
+        </div>
+        <div class="chart-wrapper tall-chart">
+          <canvas id="scoreLineChart" aria-label="Anomaly scores line chart for first 200 records"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SUSPICIOUS RECORDS TABLE -->
+    <section class="panel table-panel" aria-label="Suspicious records table">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Suspicious Records
+        </h2>
+        <span class="panel-hint">Top anomalies by score (lowest = most anomalous). Heuristic severity labels shown.</span>
+      </div>
+      <div class="severity-legend">
+        <span class="severity-badge High">High</span> Strong deviation from normal pattern &nbsp;|&nbsp;
+        <span class="severity-badge Medium">Medium</span> Moderate deviation &nbsp;|&nbsp;
+        <span class="severity-badge Low">Low</span> Mild deviation
+        <br><em class="disclaimer-small">Severity labels are heuristic risk indicators — NOT proven attack severity levels.</em>
+      </div>
+      <div class="table-container">
+        <table id="suspiciousTable" aria-label="Suspicious records">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+        <div id="tableEmpty" class="empty-state" hidden>No suspicious records detected.</div>
+      </div>
+    </section>
+
+  </div><!-- /resultsSection -->
+
+  <!-- ── EMPTY STATE (shown before first analysis) ── -->
+  <div id="emptyState" class="empty-hero">
+    <div class="empty-hero-icon" aria-hidden="true">🛡️</div>
+    <h2>Ready to Analyse</h2>
+    <p>Click <strong>Run Demo</strong> to immediately analyse the synthetic demonstration dataset,<br>
+    or upload your own CSV network-flow data above.</p>
+    <p class="note-small">The built-in demo uses synthetic data labelled as such — it is not real network traffic.</p>
+  </div>
+
+  <!-- ── MODEL INFORMATION ── -->
+  <section class="panel model-info-panel" id="modelInfoSection" aria-label="Model information">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Model Information &amp; Evaluation
+      </h2>
+    </div>
+    <div id="modelInfoContent">
+      <div class="loading-placeholder">Loading model information…</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <p>Unknown Attack Behaviour Detector &mdash; College ML Project &mdash; Isolation Forest &mdash; Educational Use Only</p>
+  <p class="footer-disclaimer">This tool is for research and educational purposes. Results are statistical anomaly indicators and do not constitute evidence of attack activity.</p>
+</footer>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
